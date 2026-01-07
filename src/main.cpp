@@ -1,4 +1,6 @@
 #include "config.h"
+#include SENSOR_LIST_HEADER
+
 #include <Arduino.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -40,19 +42,6 @@ PubSubClient pubSubClient(wifiClient);
 DeviceAddress sensorAddresses[MAX_SENSORS]; // Array to hold sensor addresses
 int detectedSensorsCount = 0;                   // Counter for detected sensors
 char* detectecSensors[MAX_SENSORS] = {};
-const char* expectedSensors[MAX_SENSORS] = {
-    "28:77:84:37:00:00:00:19",
-    "28:7E:D7:34:00:00:00:DC",
-    "28:2F:46:38:00:00:00:AD",
-    "28:16:DB:38:00:00:00:8D"
-};
-
-/*
-28:77:84:37:00:00:00:19 Heating_water_flow
-28:7E:D7:34:00:00:00:DC Heating_water_return
-28:2F:46:38:00:00:00:AD Fancoil_flow
-28:16:DB:38:00:00:00:8D Fancoil_return
-*/
 
 float lastSentTemperatures[MAX_SENSORS] = {-127}; // Initialize to 0 or a known invalid temperature
 const float temperatureChangeThreshold = 0.1;
