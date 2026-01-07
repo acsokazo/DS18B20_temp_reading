@@ -56,6 +56,7 @@ void setupOTA();
 void connectToWIFI();
 void connectToMQTT();
 void sendMQTTMessage(const char* topic, const char* message);
+void mqttCallback(char* topic, byte* payload, unsigned int length);
 char* convertDallasDeviceAddress(DeviceAddress address);
 void findDallasDevices();
 void checkFoundSensors();
@@ -70,6 +71,7 @@ void setup() {
     
     pubSubClient.setServer(mqttServer, mqttPort);
     connectToMQTT();
+    pubSubClient.setCallback(mqttCallback);
 
     // Construct the MQTT topics
     snprintf(mqttDataTopic, sizeof(mqttDataTopic), "%s/Data", mqttClientID);
@@ -99,6 +101,8 @@ void loop() {
     }
 
     ArduinoOTA.handle();  // Listen for OTA updates
+    
+    pubSubClient.loop();
     
     sensors.requestTemperatures(); // Send the command to get temperature
 
@@ -184,6 +188,12 @@ void connectToMQTT() {
 
         if (pubSubClient.connect(mqttClientID, mqttUser, mqttPassword)) {
             Serial.println("Connected to MQTT");
+
+            // Subscribe to command topic
+            char cmdTopic[50];
+            snprintf(cmdTopic, sizeof(cmdTopic), "%s/Cmd", mqttClientID);
+            pubSubClient.subscribe(cmdTopic);
+
             return;
         } else {
             Serial.print("Failed to connect to MQTT. Error code: ");
@@ -256,6 +266,22 @@ void sendMQTTMessage(const char* topic, const char* message) {
         }
     } else {
         Serial.println("MQTT client not connected. Unable to send message.");
+    }
+}
+
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+    String message;
+    for (unsigned int i = 0; i < length; i++) {
+        message += (char)payload[i];
+    }
+
+    Serial.print("MQTT command received: ");
+    Serial.println(message);
+
+    if (message == "restart" || message == "reboot") {
+        Serial.println("Restart command received. Rebooting...");
+        delay(100);
+        ESP.restart();
     }
 }
 
